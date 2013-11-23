@@ -118,18 +118,19 @@ public class ClientThread extends Thread {
 					// If a player was hit, that players id is returned, else -1 is returned
 					if (hitPlayerId != -1) {
 						// Update the players health
-						boolean alive = this.players.takeAHit(hitPlayerId, 25);
+						boolean playerAlive = this.players.takeAHit(hitPlayerId, 25);
 						// If the player dies from the hit
-						if (!alive) {
+						if (!playerAlive) {
 							// Tell every client that a player died (update kill score)
 							ClientThreads.instance().broadcastToAll(70, payload.playerId, hitPlayerId, null, 0, 0, 0, (byte)0, 0, 0, 0, 0, 0, 0);
 							// Print a status message
 							System.out.printf("Player nr. %d, %s killed player nr. %d, %s \n", this.playerId, this.playerNickname, hitPlayerId, this.players.getPlayerNick(hitPlayerId));
+							this.players.addKill(this.playerId);
+							this.players.addDeath(hitPlayerId);
 						}
 						else {
 							// Tell all other clients that a player was hit (although it only affects the one who got hit)
 							ClientThreads.instance().broadcast(this, 60, payload.playerId, hitPlayerId, null, 0, 0, 0, (byte)0, 0, 0, 0, 0, 0, 0);
-							
 						}
 					}
 					break;
@@ -141,18 +142,15 @@ public class ClientThread extends Thread {
 		catch (ClassNotFoundException e) {
 			System.out.printf("ClassNotFound ClientThread, run() \n");
 			e.printStackTrace();
+			this.dispose();
 		}
 		catch (SocketException e) {
-			System.out.printf("Player nr. %d, %s disconected \n", this.playerId, this.playerNickname);
-			ClientThreads.instance().remove(this);
-			if (this.playerId != -1) {
-				this.players.UpdatePlayer(this.playerId, 0, 0, 0, 0, 0, 0);
-				this.players.setNickname(this.playerId, null);
-			}
+			this.dispose();
 		}
 		catch (IOException e) {
 			System.out.printf("IOException ClientThread, run() \n");
 			e.printStackTrace();
+			this.dispose();
 		}
 	}
 	
@@ -181,7 +179,7 @@ public class ClientThread extends Thread {
 	}
 	
 	// Send a TcpPayload to the client
-	public void sendPayload(int typeOfPayload, int playerId, int playerId2, String message, int mapX, int mapY, int mapZ, byte mapValue,
+	public synchronized void sendPayload(int typeOfPayload, int playerId, int playerId2, String message, int mapX, int mapY, int mapZ, byte mapValue,
 							float playerPosX, float playerPosY, float playerPosZ, float playerDirX, float playerDirY, float playerDirZ) {
 		TcpPayload payload = new TcpPayload(typeOfPayload);
 		payload.playerId = playerId;
@@ -199,9 +197,22 @@ public class ClientThread extends Thread {
 		payload.playerDirZ = playerDirZ;
 		try {
 			this.ooStream.writeObject(payload);
+	    	this.ooStream.flush();
 		} catch (IOException e) {
 			System.out.printf("IOException ClientThread, SendPayload() \n");
+			this.dispose();
 			e.printStackTrace();
+		}
+	}
+	
+	public void dispose() {
+		System.out.printf("Player nr. %d, %s disconected \n", this.playerId, this.playerNickname);
+		ClientThreads.instance().remove(this);
+		if (this.playerId != -1) {
+			this.players.UpdatePlayer(this.playerId, 0, 0, 0, 0, 0, 0);
+			this.players.setNickname(this.playerId, null);
+			this.players.setKills(this.playerId, 0);
+			this.players.setDeaths(this.playerId, 0);
 		}
 	}
 

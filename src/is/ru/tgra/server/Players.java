@@ -123,6 +123,26 @@ public class Players {
 		}
 	}
 	
+	// The addKill functions adds a kill score the given player id
+	public void addKill(int playerId) {
+		this.fWriteLock.lock();
+		try {
+			this.playersKills[playerId]++;
+		} finally {
+			this.fWriteLock.unlock();
+		}
+	}
+	
+	// The addDeath functions adds a death score the given player id
+	public void addDeath(int playerId) {
+		this.fWriteLock.lock();
+		try {
+			this.playersDeaths[playerId]++;
+		} finally {
+			this.fWriteLock.unlock();
+		}
+	}
+	
 	/*
 	 * Get and set
 	 */
@@ -153,6 +173,24 @@ public class Players {
 			return this.nrPlayers;
 		} finally {
 			this.fReadLock.unlock();
+		}
+	}
+	
+	public void setKills(int newPlayerId, int newValue) {
+		this.fWriteLock.lock();
+		try {
+			this.playersKills[newPlayerId] = newValue;
+		} finally {
+			this.fWriteLock.unlock();
+		}
+	}
+	
+	public void setDeaths(int newPlayerId, int newValue) {
+		this.fWriteLock.lock();
+		try {
+			this.playersDeaths[newPlayerId] = newValue;
+		} finally {
+			this.fWriteLock.unlock();
 		}
 	}
 	

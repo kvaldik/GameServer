@@ -33,7 +33,6 @@ public class TcpPayload implements Serializable {
 	public float playerDirY;
 	public float playerDirZ;
 
-	
 	// Constructor
 	public TcpPayload(int newTypeOfPayload) {
 		this.typeOfPayload = newTypeOfPayload;

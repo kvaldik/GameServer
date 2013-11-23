@@ -42,7 +42,7 @@ public class World {
 		this.mapScale = 4.0f;
 		
 		startTime = System.currentTimeMillis();
-		
+
 		for (int x = 0; x < this.mapSize; x++)
 			for (int y = 0; y < this.mapSize; y++)
 				for (int z = 0; z < this.mapSize; z++)
