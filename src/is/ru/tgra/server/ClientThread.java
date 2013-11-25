@@ -33,6 +33,7 @@ public class ClientThread extends Thread {
 	// The current players id
 	private int playerId;
 	private String playerNickname;
+	private boolean alive;
 	
 	
 	// Constructor
@@ -58,6 +59,8 @@ public class ClientThread extends Thread {
 			System.out.printf("Error creating the input stream \n");
 			e.printStackTrace();
 		}
+		
+		this.alive = true;
 	}
 	
 	// The run functions reads changes from the client and takes appropriate actions
@@ -71,7 +74,7 @@ public class ClientThread extends Thread {
 			
 			// First the nick must be allocated
 			// Also the position of all players and the map must be sent at first
-			while (true) {
+			while (this.alive) {
 				payloadInit = new TcpPayloadInit(0);
 				payloadInit = (TcpPayloadInit) this.oiStream.readObject();
 				// Get the nick from the client and try to allocate an id
@@ -92,7 +95,7 @@ public class ClientThread extends Thread {
 				}
 			}
 			
-			while (true) {
+			while (this.alive) {
 				payload = new TcpPayload(0);
 				payload = (TcpPayload) this.oiStream.readObject();
 				
@@ -134,6 +137,11 @@ public class ClientThread extends Thread {
 						}
 					}
 					break;
+				case 80: // Chat message
+					System.out.printf("Player nr. %d, %s Said: %s \n", this.playerId, this.playerNickname, payload.message);
+					// Send this chat message to all other clients
+					ClientThreads.instance().broadcast(this, 80, payload.playerId, 0, payload.message, 0, 0, 0, (byte)0, 0, 0, 0, 0, 0, 0);
+					break;
 				default:
 					break;
 				}
@@ -148,8 +156,8 @@ public class ClientThread extends Thread {
 			this.dispose();
 		}
 		catch (IOException e) {
-			System.out.printf("IOException ClientThread, run() \n");
-			e.printStackTrace();
+			//System.out.printf("IOException ClientThread, run() \n");
+			//e.printStackTrace();
 			this.dispose();
 		}
 	}
@@ -213,6 +221,7 @@ public class ClientThread extends Thread {
 			this.players.setNickname(this.playerId, null);
 			this.players.setKills(this.playerId, 0);
 			this.players.setDeaths(this.playerId, 0);
+			this.alive = false;
 		}
 	}
 
